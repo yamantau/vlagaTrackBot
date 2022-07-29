@@ -1,4 +1,5 @@
 tink_usd_rub = -1
+last_price_tink_usd_rub = -1
 
 import time
 import config
@@ -36,10 +37,20 @@ def main():
         for marketdata in client.market_data_stream.market_data_stream(
             request_iterator()
         ):
+
             global tink_usd_rub
-            if marketdata.last_price is None:
-                tink_usd_rub = 'Биржа закрыта'
-            else:
-                tink_usd_rub = 'usd/rub - ' + str(marketdata.last_price)
+            print(marketdata)
+            global last_price_tink_usd_rub
+            try:
+                if marketdata is None:
+                    tink_usd_rub = str(last_price_tink_usd_rub) + ', биржа закрыта'
+                else:
+                    tink_usd_rub = float(str(marketdata.candle.close.units) + '.' + str(marketdata.candle.close.nano).rstrip('0'))
+                    last_price_tink_usd_rub = tink_usd_rub
+
+            except Exception as e:
+                print(e)
+                time.sleep(5)
+                continue
 
 tinkoff_exchange = Thread(target=main, args=())
