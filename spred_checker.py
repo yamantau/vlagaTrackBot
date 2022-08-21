@@ -1,22 +1,24 @@
+import data_loader
 import time
-
-import tinkoff_rate_exchange
-import binance_p2p_parser
 from threading import Thread
+import data_saver
 
-tink_invest_spred = -1.0
-tink_invest_alarm = False
 
-def invset_tink_check():
+def invset_tink_spred_saver():
     while True:
-        global tink_invest_spred
-        tink_invest_spred = round((binance_p2p_parser.p2p_usdt_rub/tinkoff_rate_exchange.tink_usd_rub/binance_p2p_parser.p2p_usdt_usd-1.0)*100, 2)
-        if tink_invest_spred > 0.1:
-            global tink_invest_alarm
-            tink_invest_alarm = True
-        else:
-            tink_invest_alarm = False
+
+        tink_invest_spred = round((data_loader.get_rate_binance('p2p_usdt_rub_buy') / data_loader.get_exchange_rate('usd_rub') / data_loader.get_rate_binance('p2p_usdt_usd_buy') - 1.0) * 100 - 0.2, 2)
+        data_saver.save_spred('invest_tink', tink_invest_spred)
         time.sleep(5)
 
-spred_tink_bin_p2p_check = Thread(target=invset_tink_check, args=())
+spred_tink_bin_p2p_check = Thread(target=invset_tink_spred_saver, args=())
 
+
+def spred_info():
+    data_res = data_loader.get_spred()
+    data_to_send = ''
+
+    for item in data_res:
+        data_to_send += 'Спред на ' + str(item['name']) + ': '+str(item['spred']) + '%\n'
+
+    return data_to_send
